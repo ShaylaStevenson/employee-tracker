@@ -1,3 +1,4 @@
+
 // const queryAllDepartment = () => {
 //     connection.query(
 //         'SELECT * FROM Department', (err, res) => {
@@ -24,5 +25,11 @@
 //     connection.end();
 // };
 
-// module.exports = queryAllDepartment();
-// module.exports = queryDeliDepartment();
+// test to make sure exports are working
+const queryAllDepartment = () => console.log('queryAllDpartment Response');
+const queryDeliDepartment = () => console.log('queryDeliDepartment Response')
+
+module.exports = {
+    queryAllDepartment,
+    queryDeliDepartment
+};
