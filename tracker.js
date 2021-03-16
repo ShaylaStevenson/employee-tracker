@@ -7,10 +7,6 @@ const express = require('express')
 // sources
 const QD = require('./queries/queryDepartment.js');
 
-// allows multiple queries in one statement
-// var connection = mysql.createConnection({multipleStatements: true});
-
-
 // create the connection information for the sql database
 const connection = mysql.createConnection({
     multipleStatements: true,
@@ -30,7 +26,7 @@ const start = (err, res) => {
             message: 'What would you like to do?',
             type: 'rawlist',
             choices: ['View all employees', 'View all employees by department', 'View all employees by role',
-            'View all employees by manager', 'Add employee', 'Remove employee', 'Update employee department', 'Update employee role', 
+            'View all employees by manager', 'Add employee', 'Remove employee', 'Update employee role', 
             'Update employee manager', 'Add role', 'View all roles', 'Add department', 'View all departments'],
             default: 'View all employees',
         }
@@ -55,9 +51,6 @@ const start = (err, res) => {
             case 'Remove employee':
                 removeEmployee();
                 break;
-            case 'Update employee department':
-                updateEmployeeDepartment();
-                break;
             case 'Update employee role':
                 updateEmployeeRole();
                 break;
@@ -70,16 +63,18 @@ const start = (err, res) => {
             case 'View all roles':
                 viewAllRoles();
                 break;
-            default:
-                console.log('ERROR: choice not recognized');
-                connection.end();
-        }
+            case 'Add department':
+                addDepartment();
+                break;
+            case 'View all departments':
+                viewAllDepartments();
+                break;
+        };
     });
 };
 
 const viewAllEmployees = () => {
-    connection.query(
-        'SELECT * FROM Employee', (err, res) => {
+    connection.query('SELECT * FROM Employee', (err, res) => {
         if (err) throw err;
         res.forEach(({ id, first_name, last_name, role_id, manager_id }) => {
             console.log(`${id} | ${first_name} | ${last_name} | ${role_id} | ${manager_id}`);
@@ -201,69 +196,180 @@ const addEmployee = () => {
                 }
             ])
             .then((answer) => {
-                console.log('New employee added')
+                console.log('New employee added:')
                 console.log(`${answer.newEmpFirstName} ${answer.newEmpLastName} | ${answer.newEmpRole} | ${answer.newEmpManager}`);
             });
     });
 };
 
-
-//////////////////////////////////
-const queryAllDepartment = () => {
-    connection.query(
-        'SELECT * FROM Department', (err, res) => {
+const removeEmployee = () => {
+    connection.query('SELECT * FROM Employee', (err, res) => {
         if (err) throw err;
-        res.forEach(({ id, name }) => {
-            console.log(`${id} | ${name}`);
-        });
-        console.log('-----------------');
+        inquirer
+            .prompt(
+                {
+                    name: 'removeWho',
+                    message: 'Which employee do you want to remove?',
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res.forEach(({ first_name, last_name }) => {
+                        choiceArray.push(`${first_name} ${last_name}`);
+                        });
+                        return choiceArray;
+                    },
+                }
+            )
+            .then((answer) => {
+                console.log('Removed employee:');
+                console.log(answer.removeWho);
+            });
     });
 };
 
-const queryAllRole = () => {
-    connection.query(
-        'SELECT * FROM Role', (err, res) => {
+const updateEmployeeRole = () => {
+    let sql = 'SELECT * FROM Employee;SELECT * FROM Role';
+    connection.query(sql, (err, res) => {
+        inquirer
+            .prompt([
+                {
+                    name: 'whichEmployee',
+                    message: 'Select employee',
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res[0].forEach(({ first_name, last_name }) => {
+                        choiceArray.push(`${first_name} ${last_name}`);
+                        });
+                        return choiceArray;
+                    },
+                },
+                {
+                    name: 'whichRole',
+                    message: 'Select new role',
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res[1].forEach(({ title }) => {
+                        choiceArray.push(title);
+                        });
+                        return choiceArray;
+                    },
+                }
+            ])
+            .then((answer) => {
+                console.log(`Updated ${answer.whichEmployee}'s role to ${answer.whichRole}`);
+            });
+    });
+};
+
+const updateEmployeeManager = () => {
+    connection.query('SELECT * FROM Employee', (err, res) => {
+        inquirer
+            .prompt([
+                {
+                    name: 'selectEmployee',
+                    message: 'Select an employee',
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res.forEach(({ first_name, last_name }) => {
+                        choiceArray.push(`${first_name} ${last_name}`);
+                        });
+                        return choiceArray;
+                    },
+                },
+                {
+                    name: 'selectManager',
+                    message: 'Select a new manager',
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res.forEach(({ first_name, last_name }) => {
+                        choiceArray.push(`${first_name} ${last_name}`);
+                        });
+                        return choiceArray;
+                    },
+                }
+            ])
+            .then((answer) => {
+                console.log(`${answer.selectEmployee}'s manager is now ${answer.selectManager}`);
+            });
+    });
+};
+
+const addRole = () => {
+    connection.query('SELECT * FROM Role', (err, res) => {
+        if (err) throw err;
+        inquirer
+            .prompt([
+                {
+                    name: 'newTitle',
+                    message: "What is the role's title?",
+                    type: 'input'
+                },
+                {
+                    name: 'newSalary',
+                    message: "What is the role's salary?",
+                    type: 'input'
+                },
+                {
+                    name: 'newDept',
+                    message: "What is the role's department?",
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res.forEach(({ title }) => {
+                        choiceArray.push(title);
+                        });
+                        return choiceArray;
+                    },
+                }
+            ])
+            .then((answer) => {
+                console.log('New role added:');
+                console.log(`${answer.newTitle} | ${answer.newSalary} | ${answer.newDept}`);
+            })
+    });        
+};
+
+const viewAllRoles = () => {
+    connection.query('SELECT * FROM Role', (err, res) => {
         if (err) throw err;
         res.forEach(({ id, title, salary, department_id }) => {
             console.log(`${id} | ${title} | ${salary} | ${department_id}`);
         });
-        console.log('-----------------');
     });
 };
 
-// const queryAllEmployee = () => {
-//     connection.query(
-//         'SELECT * FROM Employee', (err, res) => {
-//         if (err) throw err;
-//         res.forEach(({ id, first_name, last_name, role_id, manager_id }) => {
-//             console.log(`${id} | ${first_name} | ${last_name} | ${role_id} | ${manager_id}`);
-//         });
-//         console.log('-----------------');
-//     });
-//     connection.end();
-// };
+const addDepartment = () => {
+    inquirer
+        .prompt(
+            {
+                name: 'deptName',
+                message: 'What is the name of the department?',
+                type: 'input',
+            }
+        )
+        .then((answer) => {
+            console.log('New department added:');
+            console.log(answer.deptName);
+        });
+};
 
-// const queryDeliDepartment = () => {
-//     const query = connection.query(
-//         'SELECT * FROM Department WHERE name=?',
-//         ['Deli'],
-//         (err, res) => {
-//             if (err) throw err;
-//             res.forEach(({ id, name }) => {
-//                 console.log(`${id} | ${name}`);
-//             });
-//         }
-//     );
-//     console.log(query.sql);
-//     connection.end();
-// };
+const viewAllDepartments = () => {
+    connection.query('SELECT * FROM Department', (err, res) => {
+        if (err) throw err;
+        res.forEach(({ id, name }) => {
+            console.log(`${id} | ${name}`);
+        });
+    });
+};
 
 connection.connect((err) => {
     if (err) throw err;
     console.log(`connected as id ${connection.threadId}`);
     start();
-    // queryAllDepartment();
-    // queryDeliDepartment();
 });
 
 // // split the answer into individual words
