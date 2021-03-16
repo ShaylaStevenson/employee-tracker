@@ -2,20 +2,11 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
-const express = require('express')
 
 // sources
+const connection = require('./config/connection.js');
+const qEmp = require('./queries/queryEmployee.js');
 const QD = require('./queries/queryDepartment.js');
-
-// create the connection information for the sql database
-const connection = mysql.createConnection({
-    multipleStatements: true,
-    host: 'localhost',
-    port: 3306,
-    user: 'root',
-    password: 'password',
-    database: 'trackerDB',
-});
 
 const start = (err, res) => {
     if (err) throw err;
@@ -196,8 +187,44 @@ const addEmployee = () => {
                 }
             ])
             .then((answer) => {
-                console.log('New employee added:')
-                console.log(`${answer.newEmpFirstName} ${answer.newEmpLastName} | ${answer.newEmpRole} | ${answer.newEmpManager}`);
+
+                // determine the role_id based on answer
+                let role_id;
+                res[0].forEach((role) => {
+
+                    if (role.title === answer.newEmpRole) {
+                        role_id = role.id;
+                    };
+                });
+            
+                // determine the manager_id based on answer
+                let manager_id;
+                res[1].forEach((person) => {
+
+                    const fullName = `${person.first_name} ${person.last_name}`;
+                    console.log(fullName);
+
+                    if (fullName === answer.newEmpManager) {
+                        manager_id = person.id;
+                    } 
+                })
+
+                connection.query('INSERT INTO Employee SET ?',
+                    {
+                        first_name: answer.newEmpFirstName,
+                        last_name: answer.newEmpLastName,
+                        role_id: role_id,
+                        manager_id: manager_id,
+                    },
+                    (err) => {
+                      if (err) throw err;
+                      console.log('Your employee was added successfully');
+                      console.log(`${answer.newEmpFirstName} ${answer.newEmpLastName} | ${answer.newEmpRole} | ${role_id} | ${answer.newEmpManager} | ${manager_id}`);
+                      
+                      //re-prompt first question
+                      start();
+                    }
+                );
             });
     });
 };
@@ -366,11 +393,13 @@ const viewAllDepartments = () => {
     });
 };
 
-connection.connect((err) => {
-    if (err) throw err;
-    console.log(`connected as id ${connection.threadId}`);
-    start();
-});
+start();
+
+// connection.connect((err) => {
+//     if (err) throw err;
+//     console.log(`connected as id ${connection.threadId}`);
+//     start();
+// });
 
 // // split the answer into individual words
             // const choice = (answer.doWhat).split(' ');
