@@ -18,16 +18,71 @@ const connection = mysql.createConnection({
 const start = () => {
     inquirer
         .prompt({
-            name: 'greeting',
-            message: 'Welcome to Employee Tracker.\nLets begin!'
+            name: 'doWhat',
+            message: 'What would you like to do?',
+            type: 'rawlist',
+            choices: ['View all employees', 'View all employees by department', 'View all employees by role',
+             'Add employee', 'Remove employee', 'Update employee role', 'Update employee manager', 'Add role',
+             'View all roles', 'Add department', 'View all departments'],
+            default: 'View all employees',
         })
         .then((answer) => {
+
+            // split the answer into individual words
+            const choice = (answer.doWhat).split(' ');
+            
+            // return each word capitalized
+            const upperChoice = choice.map((word) => {
+                return word[0].toUpperCase() + word.substring(1);
+            }).join(' ');
+
+            // remove white space
+            const whiteOut = upperChoice.replace(/\s+/g, '');
+            
+            // make first letter of string lower case
+            //string = string.substring(0, 1).toLowerCase() + string.substring(1);
+            const finalChoice = whiteOut.substring(0, 1).toLowerCase() + whiteOut.substring(1) +'()';
+            console.log(finalChoice);
+
+            var choiceFunc = new Function(finalChoice);
+            choiceFunc();
+           
+
+            //free code camp, capitalize each first letter
+            // const mySentence = "freeCodeCamp is an awesome resource";
+            // const words = mySentence.split(" ");
+
+            // words.map((word) => { 
+            //     return word[0].toUpperCase() + word.substring(1); 
+            // }).join(" ");
+
+            //remove white space future studio.io
+            //const stripped = '    My String With A    Lot Whitespace  '.replace(/\s+/g, '');
+
+            //lowercase first letter stack overflow
+            // string = Character.toLowerCase(string.charAt(0)) + string.substring(1);
+
+
+
+            // .then((answer) => {
+            //     // based on their answer, either call the bid or the post functions
+            //     if (answer.postOrBid === 'POST') {
+            //       postAuction();
+            //     } else if (answer.postOrBid === 'BID') {
+            //       bidAuction();
+            //     } else {
+            //       connection.end();
+            //     }
+            //   });
             //console.log('looks like communication with module.exports is working.');
-            queryAllDepartment();
-            queryAllRole();
-            queryAllEmployee();
+            // queryAllDepartment();
+            // queryAllRole();
+            // queryAllEmployee();
             //queryDeliDepartment();
         })
+}
+function viewAllEmployees() {
+    console.log('I cant fucking believe this worked');
 }
 
 //////////////////////////////////
