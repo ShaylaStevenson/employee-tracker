@@ -7,82 +7,206 @@ const express = require('express')
 // sources
 const QD = require('./queries/queryDepartment.js');
 
+// allows multiple queries in one statement
+// var connection = mysql.createConnection({multipleStatements: true});
+
 
 // create the connection information for the sql database
 const connection = mysql.createConnection({
-  host: 'localhost',
-  port: 3306,
-  user: 'root',
-  password: 'password',
-  database: 'trackerDB',
+    multipleStatements: true,
+    host: 'localhost',
+    port: 3306,
+    user: 'root',
+    password: 'password',
+    database: 'trackerDB',
 });
 
-const start = () => {
+const start = (err, res) => {
+    if (err) throw err;
     inquirer
-        .prompt({
+    .prompt(
+        {
             name: 'doWhat',
             message: 'What would you like to do?',
             type: 'rawlist',
             choices: ['View all employees', 'View all employees by department', 'View all employees by role',
-             'View all employees by manager', 'Add employee', 'Remove employee', 'Update employee department', 'Update employee role', 
-             'Update employee manager', 'Add role', 'View all roles', 'Add department', 'View all departments'],
+            'View all employees by manager', 'Add employee', 'Remove employee', 'Update employee department', 'Update employee role', 
+            'Update employee manager', 'Add role', 'View all roles', 'Add department', 'View all departments'],
             default: 'View all employees',
-        })
-        .then((answer) => {
-            try {
-                switch (answer.doWhat) {
-                    case 'View all employees':
-                        viewAllEmployees();
-                        break;
-                    case 'View all employees by department':
-                        viewAllEmployeesByDepartment();
-                        break;
-                    case 'View all employees by role':
-                        viewAllEmployeesByRole();
-                        break;
-                    case 'View all employees by manager':
-                        viewAllEmployeesByManager();
-                        break;
-                    case 'Add employee':
-                        addEmployee();
-                        break;
-                    case 'Remove employee':
-                        removeEmployee();
-                        break;
-                    case 'Update employee department':
-                        updateEmployeeDepartment();
-                        break;
-                    case 'Update employee role':
-                        updateEmployeeRole();
-                        break;
-                    case 'Update employee manager':
-                        updateEmployeeManager();
-                        break;
-                    case 'Add role':
-                        addRole();
-                        break;
-                    case 'View all roles':
-                        viewAllRoles();
-                        break;
-                    default:
-                        console.log('ERROR: choice not recognized');
-                        connection.end();
-                }
-
-            } catch (error) {
-                console.log(error);
-            };
-
-            //console.log('looks like communication with module.exports is working.');
-            // queryAllDepartment();
-            // queryAllRole();
-            // queryAllEmployee();
-            //queryDeliDepartment();
-        });
+        }
+    )    
+    .then((answer) => {
+        switch (answer.doWhat) {
+            case 'View all employees':
+                viewAllEmployees();
+                break;
+            case 'View all employees by department':
+                viewAllEmployeesByDepartment();
+                break;
+            case 'View all employees by role':
+                viewAllEmployeesByRole();
+                break;
+            case 'View all employees by manager':
+                viewAllEmployeesByManager();
+                break;
+            case 'Add employee':
+                addEmployee();
+                break;
+            case 'Remove employee':
+                removeEmployee();
+                break;
+            case 'Update employee department':
+                updateEmployeeDepartment();
+                break;
+            case 'Update employee role':
+                updateEmployeeRole();
+                break;
+            case 'Update employee manager':
+                updateEmployeeManager();
+                break;
+            case 'Add role':
+                addRole();
+                break;
+            case 'View all roles':
+                viewAllRoles();
+                break;
+            default:
+                console.log('ERROR: choice not recognized');
+                connection.end();
+        }
+    });
 };
-function viewAllEmployees() {
-    console.log('I cant fucking believe this worked');
-}
+
+const viewAllEmployees = () => {
+    connection.query(
+        'SELECT * FROM Employee', (err, res) => {
+        if (err) throw err;
+        res.forEach(({ id, first_name, last_name, role_id, manager_id }) => {
+            console.log(`${id} | ${first_name} | ${last_name} | ${role_id} | ${manager_id}`);
+        });
+        console.log('-----------------');
+    });
+};
+
+const viewAllEmployeesByDepartment = () => {
+    connection.query('SELECT * FROM Department', (err, res) => {
+        if (err) throw err;
+        inquirer
+            .prompt(
+                {
+                    name: 'whichDepartment',
+                    message: 'Select department',
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res.forEach(({ name }) => {
+                          choiceArray.push(name);
+                        });
+                        return choiceArray;
+                    },      
+                }
+            )
+            .then((answer) => {
+                console.log(answer.whichDepartment); 
+            });
+    });       
+};
+
+const viewAllEmployeesByRole = () => {
+    connection.query('SELECT * FROM Role', (err, res) => {
+        if (err) throw err;
+        inquirer
+            .prompt(
+                {
+                    name: 'whichRole',
+                    message: 'Select role',
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res.forEach(({ title }) => {
+                        choiceArray.push(title);
+                        });
+                        return choiceArray;
+                    },
+                }
+            )
+            .then((answer) => {
+                console.log(answer.whichRole);
+            });
+    });     
+};
+
+const viewAllEmployeesByManager = () => {
+    connection.query('SELECT * FROM Employee', (err, res) => {   
+        inquirer
+            .prompt(
+                {
+                    name: 'whichManager',
+                    message: 'Select Manager',
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res.forEach(({ first_name, last_name }) => {
+                        choiceArray.push(`${first_name} ${last_name}`);
+                        });
+                        return choiceArray;
+                    },
+                }
+            )
+            .then((answer) => {
+                console.log(answer.whichManager);
+            });
+    });
+};
+
+const addEmployee = () => {
+    let sql = 'SELECT * FROM Role;SELECT * FROM Employee';
+    connection.query(sql, (err, res) => {
+        if (err) throw err;
+        inquirer
+            .prompt([
+                {
+                    name: 'newEmpFirstName',
+                    message: "What is the employee's first name?",
+                    type: 'input',
+                },
+                {
+                    name: 'newEmpLastName',
+                    message: "What is the employee's last name?",
+                    type: 'input',
+                },
+                {
+                    name: 'newEmpRole',
+                    message: "What is the employee's role?",
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res[0].forEach(({ title }) => {
+                        choiceArray.push(title);
+                        });
+                        return choiceArray;
+                    },
+                },
+                {
+                    name: 'newEmpManager',
+                    message: "If applicable, who is the employee's manager?",
+                    type: 'rawlist',
+                    choices() {
+                        const choiceArray = [];
+                        res[1].forEach(({ first_name, last_name }) => {
+                        choiceArray.push(`${first_name} ${last_name}`);
+                        });
+                        return choiceArray;
+                    },
+                }
+            ])
+            .then((answer) => {
+                console.log('New employee added')
+                console.log(`${answer.newEmpFirstName} ${answer.newEmpLastName} | ${answer.newEmpRole} | ${answer.newEmpManager}`);
+            });
+    });
+};
+
 
 //////////////////////////////////
 const queryAllDepartment = () => {
@@ -107,17 +231,17 @@ const queryAllRole = () => {
     });
 };
 
-const queryAllEmployee = () => {
-    connection.query(
-        'SELECT * FROM Employee', (err, res) => {
-        if (err) throw err;
-        res.forEach(({ id, first_name, last_name, role_id, manager_id }) => {
-            console.log(`${id} | ${first_name} | ${last_name} | ${role_id} | ${manager_id}`);
-        });
-        console.log('-----------------');
-    });
-    connection.end();
-};
+// const queryAllEmployee = () => {
+//     connection.query(
+//         'SELECT * FROM Employee', (err, res) => {
+//         if (err) throw err;
+//         res.forEach(({ id, first_name, last_name, role_id, manager_id }) => {
+//             console.log(`${id} | ${first_name} | ${last_name} | ${role_id} | ${manager_id}`);
+//         });
+//         console.log('-----------------');
+//     });
+//     connection.end();
+// };
 
 // const queryDeliDepartment = () => {
 //     const query = connection.query(
