@@ -67,15 +67,14 @@ const start = (err, res) => {
 const viewAllEmployees = () => {
     connection.query('SELECT * FROM Employee', (err, res) => {
         if (err) throw err;
-        res.forEach(({ id, first_name, last_name, role_id, manager_id }) => {
-            console.log(`${id} | ${first_name} | ${last_name} | ${role_id} | ${manager_id}`);
-        });
-        console.log('-----------------');
+        console.table('All Employees', res);
+        //start();
     });
 };
 
 const viewAllEmployeesByDepartment = () => {
-    connection.query('SELECT * FROM Department', (err, res) => {
+    let sql = 'SELECT * FROM Employee;SELECT * FROM Role;SELECT * FROM Department'
+    connection.query(sql, (err, res) => {
         if (err) throw err;
         inquirer
             .prompt(
@@ -85,7 +84,7 @@ const viewAllEmployeesByDepartment = () => {
                     type: 'rawlist',
                     choices() {
                         const choiceArray = [];
-                        res.forEach(({ name }) => {
+                        res[2].forEach(({ name }) => {
                           choiceArray.push(name);
                         });
                         return choiceArray;
@@ -93,7 +92,41 @@ const viewAllEmployeesByDepartment = () => {
                 }
             )
             .then((answer) => {
-                console.log(answer.whichDepartment); 
+                console.log(answer.whichDepartment);
+
+                // determine departmentId based on answer
+                let departmentId;
+                res[2].forEach((deptName) => {
+                    if (deptName.name === answer.whichDepartment) {
+                        departmentId = deptName.id;
+                    };
+                });
+
+                // determine which roles to query based on departmentId
+                let roleArr = [];
+                res[1].forEach((role) => {
+                    if (departmentId === role.department_id) {
+                        roleArr.push(role.id);
+                    };
+                });
+
+                // run query using the roleArr of relevent role_ids
+                if (roleArr !== '') {
+                    roleArr.forEach((number) => {
+                        connection.query('SELECT * FROM Employee WHERE ?',
+                            {
+                                role_id : number,
+                            },
+                            (err, res) => {
+                                if (err) throw err;
+                                console.table(`Employees in ${answer.whichDepartment} department`, res);
+                            }
+                        );
+                    }); 
+                } else {
+                    console.log('There are no employees in that department');
+                    //start();
+                };
             });
     });       
 };
@@ -191,7 +224,6 @@ const addEmployee = () => {
                 // determine the role_id based on answer
                 let role_id;
                 res[0].forEach((role) => {
-
                     if (role.title === answer.newEmpRole) {
                         role_id = role.id;
                     };
@@ -200,15 +232,14 @@ const addEmployee = () => {
                 // determine the manager_id based on answer
                 let manager_id;
                 res[1].forEach((person) => {
-
                     const fullName = `${person.first_name} ${person.last_name}`;
-                    console.log(fullName);
 
                     if (fullName === answer.newEmpManager) {
                         manager_id = person.id;
                     } 
                 })
 
+                // add new employee to database
                 connection.query('INSERT INTO Employee SET ?',
                     {
                         first_name: answer.newEmpFirstName,
