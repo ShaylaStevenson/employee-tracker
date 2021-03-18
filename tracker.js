@@ -396,6 +396,7 @@ const updateEmployeeRole = () => {
 };
 
 const updateEmployeeManager = () => {
+    // use data from Employee table to display choices
     connection.query('SELECT * FROM Employee', (err, res) => {
         inquirer
             .prompt([
@@ -426,13 +427,40 @@ const updateEmployeeManager = () => {
                 }
             ])
             .then((answer) => {
-                console.log(`${answer.selectEmployee}'s manager is now ${answer.selectManager}`);
-                start();
+                
+                //determine empId based on answer
+                let empId;
+                res.forEach((person) => {
+                    if (`${person.first_name} ${person.last_name}` === answer.selectEmployee) {
+                        empId = person.id;
+                    };
+                   
+                });
+
+                //determine mngid based on answer
+                let newMngId;
+                res.forEach((manager) => {
+                    if (`${manager.first_name} ${manager.last_name}` === answer.selectManager) {
+                        newMngId = manager.id;
+                    };
+                });
+                
+                // update manager id with new info
+                let sql =
+                `UPDATE Employee
+                SET manager_id = ${newMngId}
+                WHERE id = ${empId}`;
+                connection.query(sql, (err, res) => {
+                    if (err) throw err;
+                    console.table(`${answer.selectEmployee}'s manager is now ${answer.selectManager}`);
+                    start();
+                });
             });
     });
 };
 
 const addRole = () => {
+    // use data from Department table to display choices
     connection.query('SELECT name, id FROM Department', (err, res) => {
         if (err) throw err;
         inquirer
@@ -496,6 +524,7 @@ const addRole = () => {
 };
 
 const viewAllRoles = () => {
+    // use Role table to view all data
     connection.query('SELECT * FROM Role', (err, res) => {
         if (err) throw err;
             console.table('All roles', res);
@@ -533,6 +562,7 @@ const addDepartment = () => {
 };
 
 const viewAllDepartments = () => {
+    // use Department table to view data
     connection.query('SELECT * FROM Department', (err, res) => {
         if (err) throw err;
         console.table('All departments', res);
