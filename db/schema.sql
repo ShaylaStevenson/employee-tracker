@@ -8,9 +8,6 @@ CREATE TABLE Department (
     PRIMARY KEY (id)
 );
 
-INSERT INTO Department (name)
-VALUES ('Major Sales'), ('Optical'), ('Hearing Aid'), ('Pharmacy'), ('Deli');
-
 CREATE TABLE Role (
     id INT(10) auto_increment NOT NULL,
     title VARCHAR(30),
@@ -19,13 +16,7 @@ CREATE TABLE Role (
     PRIMARY KEY (id) 
 );
 
-INSERT INTO Role (title, salary, department_id)
-VAlUES ('Sales Associate', 40000, 1),
-('Optometrist', 92000, 2),
-('Licensed Dispencer', 73000, 3),
-('Technician', 71000, 4),
-('Chicken Guy', 33000, 5),
-('Prep Person', 36000, 5);
+
 
 CREATE TABLE Employee (
     id INT(10) auto_increment NOT NULL,
@@ -36,6 +27,5 @@ CREATE TABLE Employee (
     PRIMARY KEY (id)
 );
 
-INSERT INTO Employee (first_name, last_name, role_id, manager_id)
-VALUES ('Bertha', 'Blue', 1, 5), ('Hue', 'Lui', 2, 5), ('Ben', 'Tens', 3, 5), ('Wina', 'Slima', 4, 5), ('Gert', 'Mert', 5, null), ('Beatrice', 'Bert', 5, 5);
+
 

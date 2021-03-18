@@ -63,6 +63,7 @@ const start = (err, res) => {
 };
 
 const viewAllEmployees = () => {
+    // query data from Employee table 
     let sql = `SELECT id AS 'Emp ID', CONCAT(first_name, ' ', last_name) AS 'Name' FROM Employee`
     connection.query(sql, (err, res) => {
         if (err) throw err;
@@ -72,7 +73,8 @@ const viewAllEmployees = () => {
 };
 
 const viewAllEmployeesByDepartment = () => {
-    let sql = 'SELECT * FROM Employee;SELECT * FROM Role;SELECT * FROM Department'
+    // use data from Department table to display choices
+    let sql = 'SELECT * FROM Department'
     connection.query(sql, (err, res) => {
         if (err) throw err;
         inquirer
@@ -83,7 +85,7 @@ const viewAllEmployeesByDepartment = () => {
                     type: 'rawlist',
                     choices() {
                         const choiceArray = [];
-                        res[2].forEach(({ name }) => {
+                        res.forEach(({ name }) => {
                           choiceArray.push(name);
                         });
                         return choiceArray;
@@ -91,45 +93,23 @@ const viewAllEmployeesByDepartment = () => {
                 }
             )
             .then((answer) => {
-
-                // determine departmentId based on answer
-                let departmentId;
-                res[2].forEach((deptName) => {
-                    if (deptName.name === answer.whichDepartment) {
-                        departmentId = deptName.id;
-                    };
-                });
-
-                // determine which roles to query based on departmentId
-                let roleArr = [];
-                res[1].forEach((role) => {
-                    if (departmentId === role.department_id) {
-                        roleArr.push(role.id);
-                    };
-                });
-
-                // run query using the roleArr of relevent role_ids
-                if (roleArr !== '') {
-                    roleArr.forEach((number) => {
-                        let sql =
-                        `SELECT id AS 'Emp Id', CONCAT(first_name, ' ', last_name) AS 'Name'
-                        FROM Employee
-                        WHERE ?`
-                        connection.query(sql,
-                            {
-                                role_id : number,
-                            },
-                            (err, res) => {
-                                if (err) throw err;
-                                console.table(`Employees in ${answer.whichDepartment} department`, res);
-                                start();
-                            }
-                        );
-                    }); 
-                } else {
-                    console.log('There are no employees in that department');
-                    start();
-                };
+                // join data from Employee, Role, and Department tables
+                let sql =
+                    `SELECT Employee.id AS 'Emp ID', CONCAT(Employee.first_name, ' ', Employee.last_name) AS 'Name', role.title AS 'Title'
+                    FROM Employee 
+                    INNER JOIN Role ON Employee.role_id = Role.id 
+                    INNER JOIN department ON Role.department_id = Department.id 
+                    WHERE department.name = '${answer.whichDepartment}'`;
+                    connection.query(sql, (err, res) => {
+                        if (err) throw err;
+                        if (res !== '') {
+                            console.table(`Employees in ${answer.whichDepartment} department`, res);
+                            start();
+                        } else {
+                            console.log('There are no employees in that department');
+                            start();
+                        }; 
+                    });    
             });
     });       
 };
@@ -263,7 +243,7 @@ const addEmployee = () => {
                         res[1].forEach(({ first_name, last_name }) => {
                         choiceArray.push(`${first_name} ${last_name}`);
                         });
-                        choiceArray.push('Do not assign to a manager')
+                        choiceArray.push('Do not assign to a manager');
                         return choiceArray;
                     },
                 }
@@ -338,7 +318,6 @@ const removeEmployee = () => {
                 res.forEach((employee) => {
                     if (`${employee.first_name} ${employee.last_name}` === answer.removeWho) {
                         empId = employee.id;
-                        console.log(empId);
                     };
                 });
 
@@ -441,12 +420,14 @@ const updateEmployeeManager = () => {
                         res.forEach(({ first_name, last_name }) => {
                         choiceArray.push(`${first_name} ${last_name}`);
                         });
+                        choiceArray.push('Do not assign to a manager');
                         return choiceArray;
                     },
                 }
             ])
             .then((answer) => {
                 console.log(`${answer.selectEmployee}'s manager is now ${answer.selectManager}`);
+                start();
             });
     });
 };
