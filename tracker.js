@@ -3,8 +3,23 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 
-// sources
-const connection = require('./config/connection.js');
+// establish connection
+const connection = mysql.createConnection({
+    multipleStatements: true,
+    host: 'localhost',
+    port: 3306,
+    user: 'root',
+    // enter your mysql workbench password here
+    password: 'password',
+    database: 'trackerDB',
+});
+
+// display connection res and start app
+connection.connect((err) => {
+    if (err) throw err;
+    console.log(`connected as id ${connection.threadId}`);
+    start();
+});
 
 const start = (err, res) => {
     if (err) throw err;
@@ -570,4 +585,4 @@ const viewAllDepartments = () => {
     });
 };
 
-start();
+//start();
