@@ -5,8 +5,7 @@ const cTable = require('console.table');
 
 // sources
 const connection = require('./config/connection.js');
-const qEmp = require('./queries/queryEmployee.js');
-const QD = require('./queries/queryDepartment.js');
+//const Employee = require('./queries/queryEmployee')
 
 const start = (err, res) => {
     if (err) throw err;
@@ -132,7 +131,8 @@ const viewAllEmployeesByDepartment = () => {
 };
 
 const viewAllEmployeesByRole = () => {
-    connection.query('SELECT * FROM Role', (err, res) => {
+    // use the title's from Role table to list choices
+    connection.query('SELECT title FROM Role', (err, res) => {
         if (err) throw err;
         inquirer
             .prompt(
@@ -150,13 +150,28 @@ const viewAllEmployeesByRole = () => {
                 }
             )
             .then((answer) => {
-                console.log(answer.whichRole);
+                // inner join Role and Employee to display table
+                let sql =
+                `SELECT Employee.id AS 'Emp ID', CONCAT(Employee.first_name, ' ', Employee.last_name) AS 'Name'
+                FROM Role
+                INNER JOIN Employee
+                ON Role.id = Employee.role_id
+                WHERE Role.title = '${answer.whichRole}'`;
+                connection.query(sql, (err, res) => {
+                    if (err) throw err;
+                    if (res !== '') {
+                        console.table(`Employees assigned to ${answer.whichRole}`, res);
+                    } else {
+                        console.log(`There are no employees assigned to the role of ${answer.whichRole}`);
+                    };    
+                });
             });
     });     
 };
 
 const viewAllEmployeesByManager = () => {
-    connection.query('SELECT * FROM Employee', (err, res) => {   
+    // show choice of managers (ie, all employees) full name
+    connection.query('SELECT first_name, last_name FROM Employee', (err, res) => {  
         inquirer
             .prompt(
                 {
@@ -166,19 +181,44 @@ const viewAllEmployeesByManager = () => {
                     choices() {
                         const choiceArray = [];
                         res.forEach(({ first_name, last_name }) => {
-                        choiceArray.push(`${first_name} ${last_name}`);
+                            choiceArray.push(`${first_name} ${last_name}`);
                         });
                         return choiceArray;
                     },
                 }
             )
             .then((answer) => {
-                console.log(answer.whichManager);
-            });
+                // find the id of the selected manager and save as mngId
+                let sql =
+                `SELECT id, CONCAT(first_name, ' ', last_name) AS fullName 
+                FROM Employee
+                WHERE CONCAT(first_name, ' ', last_name) = '${answer.whichManager}'`;
+                connection.query(sql, (err, res) => {
+                    if (err) throw err;
+                    //console.log(res[0].id);
+                    const mngId = res[0].id;
+                    //console.log(mngId);
+                
+                    // use the mngId to select employees with matching manager_id
+                    let sql2 = 
+                    `SELECT id AS 'Emp ID', CONCAT(first_name, ' ', last_name) AS 'Name'
+                    FROM Employee
+                    WHERE manager_id = '${mngId}'`;
+                    connection.query(sql2, (err, res) => {
+                        if (err) throw err;
+                        if (res != '') {
+                            console.table(`Employees reporting to ${answer.whichManager}`, res);
+                        } else {
+                            console.log(`There are no employees reporting to ${answer.whichManager}`);
+                        }; 
+                    });
+                });
+            });    
     });
 };
 
 const addEmployee = () => {
+    // use data from Role and Employee tables to display choices
     let sql = 'SELECT * FROM Role;SELECT * FROM Employee';
     connection.query(sql, (err, res) => {
         if (err) throw err;
@@ -286,6 +326,7 @@ const removeEmployee = () => {
 };
 
 const updateEmployeeRole = () => {
+    // use data from Employee and Role tables to display choices
     let sql = 'SELECT * FROM Employee;SELECT * FROM Role';
     connection.query(sql, (err, res) => {
         inquirer
@@ -316,7 +357,34 @@ const updateEmployeeRole = () => {
                 }
             ])
             .then((answer) => {
-                console.log(`Updated ${answer.whichEmployee}'s role to ${answer.whichRole}`);
+
+                // determine the employee's id # based on answer
+                let empId;
+                res[0].forEach((employee) => {
+                    if (`${employee.first_name} ${employee.last_name}` === answer.whichEmployee) {
+                        empId = employee.id;
+                        console.log(empId);
+                    };
+                });
+
+                // determine the role's id # based on answer
+                let roleId;
+                res[1].forEach((role) => {
+                    if (role.title === answer.whichRole) {
+                        roleId = role.id;
+                        console.log(roleId);
+                    };
+                });
+                
+                // update the selected emplyee'r role in database
+                let sql =
+                `UPDATE Employee
+                SET role_id = ${roleId}
+                WHERE id = ${empId}`;
+                connection.query(sql, (err, res) => {
+                    if(err) return err;
+                    console.table(`${answer.whichEmployee}'s role has been updated to ${answer.whichRole}`);
+                });
             });
     });
 };
