@@ -5,7 +5,6 @@ const cTable = require('console.table');
 
 // sources
 const connection = require('./config/connection.js');
-//const Employee = require('./queries/queryEmployee')
 
 const start = (err, res) => {
     if (err) throw err;
@@ -64,10 +63,11 @@ const start = (err, res) => {
 };
 
 const viewAllEmployees = () => {
-    connection.query('SELECT * FROM Employee', (err, res) => {
+    let sql = `SELECT id AS 'Emp ID', CONCAT(first_name, last_name) AS 'Name' FROM Employee`
+    connection.query(sql, (err, res) => {
         if (err) throw err;
         console.table('All Employees', res);
-        //start();
+        start();
     });
 };
 
@@ -91,7 +91,6 @@ const viewAllEmployeesByDepartment = () => {
                 }
             )
             .then((answer) => {
-                console.log(answer.whichDepartment);
 
                 // determine departmentId based on answer
                 let departmentId;
@@ -112,19 +111,24 @@ const viewAllEmployeesByDepartment = () => {
                 // run query using the roleArr of relevent role_ids
                 if (roleArr !== '') {
                     roleArr.forEach((number) => {
-                        connection.query('SELECT * FROM Employee WHERE ?',
+                        let sql =
+                        `SELECT id AS 'Emp Id', CONCAT(first_name, last_name) AS 'Name'
+                        FROM Employee
+                        WHERE ?`
+                        connection.query(sql,
                             {
                                 role_id : number,
                             },
                             (err, res) => {
                                 if (err) throw err;
                                 console.table(`Employees in ${answer.whichDepartment} department`, res);
+                                start();
                             }
                         );
                     }); 
                 } else {
                     console.log('There are no employees in that department');
-                    //start();
+                    start();
                 };
             });
     });       
@@ -161,8 +165,10 @@ const viewAllEmployeesByRole = () => {
                     if (err) throw err;
                     if (res !== '') {
                         console.table(`Employees assigned to ${answer.whichRole}`, res);
+                        start();
                     } else {
                         console.log(`There are no employees assigned to the role of ${answer.whichRole}`);
+                        start();
                     };    
                 });
             });
@@ -208,8 +214,10 @@ const viewAllEmployeesByManager = () => {
                         if (err) throw err;
                         if (res != '') {
                             console.table(`Employees reporting to ${answer.whichManager}`, res);
+                            start();
                         } else {
                             console.log(`There are no employees reporting to ${answer.whichManager}`);
+                            start();
                         }; 
                     });
                 });
@@ -287,12 +295,11 @@ const addEmployee = () => {
                         role_id: role_id,
                         manager_id: manager_id,
                     },
-                    (err) => {
+                    (err, res) => {
                       if (err) throw err;
                       console.log('Your employee was added successfully');
-                      console.log(`${answer.newEmpFirstName} ${answer.newEmpLastName} | ${answer.newEmpRole} | ${role_id} | ${answer.newEmpManager} | ${manager_id}`);
+                      console.table(`${answer.newEmpFirstName} ${answer.newEmpLastName} | ${answer.newEmpRole} ${role_id} | ${answer.newEmpManager} ${manager_id}`);
                       
-                      //re-prompt first question
                       start();
                     }
                 );
@@ -321,6 +328,22 @@ const removeEmployee = () => {
             .then((answer) => {
                 console.log('Removed employee:');
                 console.log(answer.removeWho);
+                // determine the employee's id # based on answer
+                let empId;
+                res.forEach((employee) => {
+                    if (`${employee.first_name} ${employee.last_name}` === answer.removeWho) {
+                        empId = employee.id;
+                        console.log(empId);
+                    };
+                });
+
+                // delete the employee with matching id from database
+                let sql = `DELETE FROM Employee WHERE id = ${empId}`;
+                connection.query(sql, (err, res) => {
+                    if (err) throw err;
+                    console.table(`${answer.removeWho} has been removed`);
+                    start();
+                });
             });
     });
 };
@@ -363,7 +386,6 @@ const updateEmployeeRole = () => {
                 res[0].forEach((employee) => {
                     if (`${employee.first_name} ${employee.last_name}` === answer.whichEmployee) {
                         empId = employee.id;
-                        console.log(empId);
                     };
                 });
 
@@ -372,11 +394,10 @@ const updateEmployeeRole = () => {
                 res[1].forEach((role) => {
                     if (role.title === answer.whichRole) {
                         roleId = role.id;
-                        console.log(roleId);
                     };
                 });
                 
-                // update the selected emplyee'r role in database
+                // update the selected employee's role in database
                 let sql =
                 `UPDATE Employee
                 SET role_id = ${roleId}
