@@ -16,8 +16,6 @@ CREATE TABLE Role (
     PRIMARY KEY (id) 
 );
 
-
-
 CREATE TABLE Employee (
     id INT(10) auto_increment NOT NULL,
     first_name VARCHAR(30),
@@ -26,6 +24,3 @@ CREATE TABLE Employee (
     manager_id INT(10),
     PRIMARY KEY (id)
 );
-
-
-
