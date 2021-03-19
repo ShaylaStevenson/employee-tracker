@@ -1,6 +1,6 @@
 # Employee Tracker
 
-Employee Tracker is a workplace tool used to organize and track personnel. From the command line, interact with your mysql database through intuitive prompts. The application can easily be developed further to add options neccessary for your organization.
+Employee Tracker is a workplace tool used to organize and track personnel. From the command line, interact with your MySql database through use of Inquirer prompts. The application can easily be developed further to add options necessary for your organization.
 
 ## Table of Contents
 [Features](#Features)
@@ -32,7 +32,7 @@ Employee Tracker is a workplace tool used to organize and track personnel. From 
 
 ## Installation
 * Run npm install to get all dependencies
-* Run schema.sql in mysql workbench
+* Run schema.sql in MySql workbench
 * seed.sql provided to run in mysql workbench if desired
 
 ## Usage
@@ -43,7 +43,7 @@ Employee Tracker is a workplace tool used to organize and track personnel. From 
 ## Demo
 To view a video walkthrough, play:
 
-[![Demo Image](dist/screenshots/dashboard-demo.png)](https://drive.google.com/file/d/1k7AM1pN3aI9R44eWsVy4211t9l5RTFYj/view "Demo Video")
+[![Demo Image](assets/images/employee-tracker.png)](https://drive.google.com/file/d/1IU1UjQsQC3khPVBaUkRNKav5gKIYpDy5/view "Demo Video")
 
 ## Questions
 Don't hesitate to reach out 

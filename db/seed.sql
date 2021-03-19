@@ -1,8 +1,7 @@
 USE trackerDB;
--- Will the user just copy and paste this into workbench with the schema?
+
 
 -- Data for Department table --
--- Should I include id?
 INSERT INTO Department (id, name)
 VALUES (1, 'Administration'), (2, 'Front End'), (3, 'Merchandising'),
 (4, 'Food Court'), (5, 'Deli'), (6, 'Bakery'),
