@@ -31,7 +31,7 @@ const start = (err, res) => {
             type: 'rawlist',
             choices: ['View all employees', 'View all employees by department', 'View all employees by role',
             'View all employees by manager', 'Add employee', 'Remove employee', 'Update employee role', 
-            'Update employee manager', 'Add role', 'View all roles', 'Add department', 'View all departments'],
+            'Update employee manager', 'Add role', 'View all roles', 'Add department', 'View all departments', 'Exit Employee Tracker'],
             default: 'View all employees',
         }
     )    
@@ -72,6 +72,9 @@ const start = (err, res) => {
                 break;
             case 'View all departments':
                 viewAllDepartments();
+                break;
+            case 'Exit Employee Tracker':
+                exitEmployeeTracker();
                 break;
         };
     });
@@ -585,4 +588,8 @@ const viewAllDepartments = () => {
     });
 };
 
-//start();
+const exitEmployeeTracker = () => {
+    console.log('Goodbye!')
+    connection.end();
+};
+// Thanks for visiting!
